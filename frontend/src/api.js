@@ -1,4 +1,4 @@
-// C:\bc_vehicle\frontend\src\api.js
+// 아아악 시이발 왜 이렇게 로컬호스트로 보내는거야 시발
 
 import axios from "axios";
 
