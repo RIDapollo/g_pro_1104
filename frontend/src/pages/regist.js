@@ -10,9 +10,16 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import API_URL from "../api";
+import { useNavigate } from "react-router-dom";
+
+// ✅ 1. axios 원본 라이브러리와 API_URL 문자열을 import
 import axios from "axios";
-import { useNavigate } from "react-router-dom";  // ✅ 추가
+import API_URL from "../api"; 
+
+// ✅ 2. 가져온 API_URL로 baseURL이 설정된 axios 인스턴스 생성
+const api = axios.create({
+  baseURL: API_URL
+});
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -20,9 +27,9 @@ export default function RegisterPage() {
   const [walletAddress, setWalletAddress] = useState("");
   const [role, setRole] = useState("user");
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();                 // ✅ 추가
+  const navigate = useNavigate();
 
-  // MetaMask 연결
+  // MetaMask 연결 (기존과 동일)
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
@@ -40,7 +47,8 @@ export default function RegisterPage() {
   const checkDuplicateUsername = async () => {
     if (!username) return setMessage("ID를 입력하세요.");
     try {
-      const res = await axios.get("/api/users/check-id", { params: { username } });
+      // ✅ 3. 기본 axios 대신 생성한 'api' 인스턴스 사용
+      const res = await api.get("/api/users/check-id", { params: { username } });
       setMessage(res.data.available ? "사용 가능한 ID입니다." : "이미 사용 중인 ID입니다.");
     } catch (err) {
       const status = err.response?.status;
@@ -56,16 +64,17 @@ export default function RegisterPage() {
       return;
     }
     try {
-      await axios.post("/api/users/register", { username, password, walletAddress, role });
+      // ✅ 4. 기본 axios 대신 생성한 'api' 인스턴스 사용
+      await api.post("/api/users/register", { username, password, walletAddress, role });
+      
       // 폼 초기화
       setUsername("");
       setPassword("");
       setWalletAddress("");
       setRole("user");
-      // 메시지 표시 후 바로 이동(원하면 setTimeout으로 약간의 지연도 가능)
       setMessage("회원가입 성공");
       alert("✅ 회원가입이 완료되었습니다.");
-      navigate("/");                              // ✅ 초기 화면으로 이동
+      navigate("/");
     } catch (err) {
       if (err.response?.status === 409) setMessage("중복된 메타마스크 주소입니다.");
       else setMessage(`회원가입 실패: ${err.message}`);
