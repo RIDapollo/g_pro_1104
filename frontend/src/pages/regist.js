@@ -11,7 +11,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import axios from "../api.js";
+import axios from "../api";
 import { useNavigate } from "react-router-dom";  // ✅ 추가
 
 export default function RegisterPage() {
