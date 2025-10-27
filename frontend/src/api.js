@@ -1,6 +1,10 @@
 import axios from "axios";
 
-// 백엔드 주소로 기본값 설정 (개발용)
-axios.defaults.baseURL = "http://localhost:5000";
+
+const API_URL = process.env.NODE_ENV === 'production'
+    ? process.env.REACT_APP_API_URL
+    : "http://localhost:5000";
+
+axios.defaults.baseURL = API_URL;
 
 export default axios;
