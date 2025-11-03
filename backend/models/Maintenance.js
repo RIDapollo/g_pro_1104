@@ -25,6 +25,10 @@ const maintenanceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  transactionHash: {
+    type: String,
+    required: false, 
+  }
 });
 
 module.exports = mongoose.model('Maintenance', maintenanceSchema);
