@@ -39,7 +39,11 @@ export default function PartManager() {
   const fetchParts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/parts');
+      // ✅ 인증 토큰 추가
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/parts', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setParts(response.data.parts || []);
     } catch (error) {
       console.error('부품 목록 조회 오류:', error);
@@ -69,8 +73,10 @@ export default function PartManager() {
     setLoading(true);
 
     try {
-      // 백엔드 API 호출: 부품의 고유 ID(_id)를 이용해 DELETE 요청
+      // ✅ 인증 토큰 추가
+      const token = localStorage.getItem('token');
       await axios.delete(`/api/parts/delete`, {
+        headers: { Authorization: `Bearer ${token}` },
         data: { partId: partToDelete._id }
       });
       
@@ -127,7 +133,7 @@ export default function PartManager() {
                       <ListItem>
                         <ListItemText 
                           primary={<Typography color="white">{part.partId}</Typography>}
-                          secondary={`제조사: ${part.manufacturer} / 연식: ${part.year}`}
+                          secondary={`S/N: ${part.serialNumber ? part.serialNumber.substring(0, 8) : 'N/A'}... | 제조사: ${part.manufacturer} / 연식: ${part.year}`}
                           secondaryTypographyProps={{ color: 'rgba(255,255,255,0.7)' }}
                         />
                         <ListItemSecondaryAction>
@@ -165,7 +171,7 @@ export default function PartManager() {
           <DialogTitle>부품 삭제 확인</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {partToDelete && `정말로 "${partToDelete.partId}" 부품을 삭제하시겠습니까?`}
+              {partToDelete && `정말로 "${partToDelete.partId}" 부품(S/N: ${partToDelete.serialNumber ? partToDelete.serialNumber.substring(0, 8) : ''}...)을 삭제하시겠습니까?`}
             </DialogContentText>
           </DialogContent>
           <DialogActions>

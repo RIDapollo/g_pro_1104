@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const partSchema = new mongoose.Schema({
-  partId: {
+  partId: { // 부품 종류 (예: 엔진 - 흡기계)
     type: String,
     required: true,
   },
@@ -13,6 +13,15 @@ const partSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  registrationDate: {
+    type: Date,
+    required: true,
+  },
+  serialNumber: { // 고유 일련번호
+    type: String,
+    required: true,
+    unique: true,
+  },
   qrCode: {
     type: String,
     required: true,
@@ -23,7 +32,4 @@ const partSchema = new mongoose.Schema({
   },
 });
 
-// 수정: 모델을 exports할 때 바로 사용 가능한 형태로 변경
-const Part = mongoose.model('Part', partSchema);
-
-module.exports = Part;
+module.exports = mongoose.model('Part', partSchema);

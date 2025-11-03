@@ -6,8 +6,8 @@ async function connectDB() {
     await mongoose.connect(process.env.MONGODB_URI, { dbName: "bc_vehicle" });
     console.log("✅ MongoDB connected");
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
+    console.error("MongoDB 연결 오류:", err.message);
+    process.exit(1); // 연결 실패 시 프로세스 종료
   }
 }
 

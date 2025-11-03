@@ -46,26 +46,30 @@ export default function PartRegist() {
     const [loading, setLoading] = useState(false);
     const qrRef = useRef(); // QR 코드 다운로드를 위한 ref
 
+    // 대분류 선택 시 중분류 초기화
     const handleMainCategoryChange = (e) => {
         setMainCategory(e.target.value);
         setSubCategory('');
     };
     
     // QR 코드 다운로드 함수
-    const downloadQRCode = () => {
+    const downloadQRCode = (filename = 'part-qrcode.png') => {
+        // ref를 통해 canvas 요소에 접근
         const canvas = qrRef.current.querySelector('canvas');
         if (canvas) {
+            // 캔버스 데이터를 이미지 URL로 변환
             const image = canvas.toDataURL("image/png");
+            // 다운로드를 위한 임시 a 태그 생성
             const link = document.createElement("a");
             link.href = image;
-            // 파일명 예시: part-qrcode-현대모비스-2024.png
-            link.download = `part-qrcode-${manufacturer}-${year}.png`;
+            link.download = filename; // 동적 파일명 설정
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
     };
 
+    // 부품 등록 핸들러
     const handleRegister = async () => {
         setLoading(true);
         try {
@@ -78,28 +82,38 @@ export default function PartRegist() {
             const partInfo = `${mainCategory} - ${subCategory}`;
             const registrationDate = new Date().toISOString();
             
+            // ✅ 1. 부품 고유 일련번호 (UUID) 생성
+            const serialNumber = crypto.randomUUID();
+
+            // ✅ 2. QR 코드에 고유 일련번호 추가
             const dataToEncode = JSON.stringify({
-                partId: partInfo,
+                partId: partInfo, // 부품 종류
                 year: year,
                 manufacturer: manufacturer,
                 registrationDate: registrationDate,
+                serialNumber: serialNumber // ✅ 고유 일련번호
             });
 
-            // QR 코드 데이터 설정 후, React가 리렌더링할 시간을 잠시 줍니다.
+            // QR 코드 데이터를 state에 저장하여 화면에 렌더링
             setQrCodeData(dataToEncode);
 
+            // ✅ 3. 백엔드 API로 고유 일련번호 전송
             const response = await axios.post('/api/parts/register', {
                 partId: partInfo,
                 year: year,
                 manufacturer: manufacturer,
                 registrationDate: registrationDate,
+                serialNumber: serialNumber, // ✅ 고유 일련번호
                 qrCode: dataToEncode,
             });
             
             setMessage({ text: response.data.message, type: 'success' });
             
-            // 등록 성공 후 QR 코드 자동 다운로드 (setTimeout으로 렌더링 후 실행 보장)
-            setTimeout(downloadQRCode, 500);
+            // ✅ 4. 등록 성공 후 QR 코드 자동 다운로드
+            // state 업데이트가 렌더링될 시간을 0.5초 정도 확보
+            setTimeout(() => {
+                downloadQRCode(`part-qrcode-${manufacturer}-${year}-${serialNumber.substring(0, 4)}.png`);
+            }, 500);
 
         } catch (error) {
             console.error('부품 등록 중 오류 발생:', error);
@@ -214,11 +228,13 @@ export default function PartRegist() {
                 
                 {qrCodeData && (
                     <Paper elevation={3} sx={{ p: 4, mt: 3, bgcolor: 'rgba(30, 30, 30, 0.9)', borderRadius: 3 }}>
+                        {/* ✅ ref={qrRef} 추가 */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} ref={qrRef}>
                             <Typography variant="h6" gutterBottom color="white">
                                 생성된 QR 코드 (자동 다운로드됩니다)
                             </Typography>
                             <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                                {/* ✅ QRCodeCanvas가 렌더링되도록 수정 */}
                                 <QRCodeCanvas value={qrCodeData} size={256} />
                             </Box>
                         </Box>
