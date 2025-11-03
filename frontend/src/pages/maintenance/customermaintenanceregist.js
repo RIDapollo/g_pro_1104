@@ -23,11 +23,11 @@ export default function CustomerMaintenanceRegist() {
   const navigate = useNavigate();
   const [shopAddress, setShopAddress] = useState(localStorage.getItem('walletAddress') || '');
 
-  // --- 상태 변수 수정 ---
-  const [customers, setCustomers] = useState([]); // 1. 등록된 고객 목록
-  const [selectedCustomer, setSelectedCustomer] = useState(null); // 2. 선택된 고객 객체
-  const [customerVehicles, setCustomerVehicles] = useState([]); // 3. 선택된 고객의 차량 목록
-  const [selectedVehicle, setSelectedVehicle] = useState(null); // 4. 최종 선택된 차량 객체
+  // --- 상태 변수 ---
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerVehicles, setCustomerVehicles] = useState([]);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
   const [maintenanceDescription, setMaintenanceDescription] = useState('');
   const [odometer, setOdometer] = useState('');
@@ -38,7 +38,7 @@ export default function CustomerMaintenanceRegist() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
 
-  // 페이지 로드 시 등록된 고객 목록을 불러옵니다.
+  // 1. 페이지 로드 시 등록된 고객 목록을 불러옵니다.
   useEffect(() => {
     const fetchCustomers = async () => {
       const token = localStorage.getItem('token');
@@ -48,6 +48,7 @@ export default function CustomerMaintenanceRegist() {
       }
       setLoading(true);
       try {
+        // ✅ 인증 헤더 추가
         const response = await axios.get('/api/customers', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -58,7 +59,7 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '등록된 고객이 없습니다.', type: 'info' });
         }
       } catch (error) {
-        setMessage({ text: '고객 목록을 불러오는 데 실패했습니다.', type: 'error' });
+        setMessage({ text: error.response?.data?.message || '고객 목록을 불러오는 데 실패했습니다.', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -66,15 +67,19 @@ export default function CustomerMaintenanceRegist() {
     fetchCustomers();
   }, []);
 
-  // QR 코드 스캐너 로직
+  // QR 코드 스캐너 로직 (기존과 동일)
   useEffect(() => {
     if (!showScanner) return;
     const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: { width: 250, height: 250 } }, false);
     const onScanSuccess = (decodedText) => {
         try {
             const partData = JSON.parse(decodedText);
-            setScannedPartInfo(partData);
-            setMessage({ text: '✅ QR 코드를 성공적으로 인식했습니다.', type: 'success' });
+            if (partData.partId && partData.year && partData.manufacturer && partData.serialNumber) {
+              setScannedPartInfo(partData);
+              setMessage({ text: '✅ QR 코드를 성공적으로 인식했습니다.', type: 'success' });
+            } else {
+              setMessage({ text: '유효하지 않은 부품 정보가 포함된 QR 코드입니다.', type: 'error' });
+            }
         } catch (e) {
             setMessage({ text: 'QR 코드 데이터 형식이 올바르지 않습니다.', type: 'error' });
         } finally {
@@ -102,6 +107,11 @@ export default function CustomerMaintenanceRegist() {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
+        if (!token) {
+          setMessage({ text: '로그인이 필요합니다.', type: 'error' });
+          return;
+        }
+        // ✅ 인증 헤더 추가
         const response = await axios.get(`/api/vehicles/by-customer?userId=${customerId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -112,7 +122,7 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '해당 고객에게 등록된 차량이 없습니다.', type: 'info' });
         }
       } catch (error) {
-        setMessage({ text: '고객의 차량 정보를 불러오는 데 실패했습니다.', type: 'error' });
+        setMessage({ text: error.response?.data?.message || '고객의 차량 정보를 불러오는 데 실패했습니다.', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -134,14 +144,24 @@ export default function CustomerMaintenanceRegist() {
     }
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setMessage({ text: '로그인이 필요합니다.', type: 'error' });
+        return;
+      }
+
+      // ✅ API 호출에 인증 헤더 추가
       const response = await axios.post('/api/maintenance/register', {
         vehicleNumber: selectedVehicle.vehicleNumber,
         odometer: Number(odometer),
         description: maintenanceDescription,
         partInfo: scannedPartInfo,
-        walletAddress: selectedVehicle.walletAddress, // 선택된 차량의 소유주 지갑
+        walletAddress: selectedVehicle.walletAddress, 
         requesterAddress: shopAddress,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+
       alert('정비 이력이 성공적으로 등록되었습니다.');
       navigate('/main');
     } catch (error) {
@@ -224,6 +244,8 @@ export default function CustomerMaintenanceRegist() {
                   <Box sx={{ p: 2, border: '1px dashed grey', borderRadius: 1, mb: 2 }}>
                     <Typography>부품: {scannedPartInfo.partId}</Typography>
                     <Typography>제조사: {scannedPartInfo.manufacturer}</Typography>
+                    <Typography>연식: {scannedPartInfo.year}</Typography>
+                    <Typography>일련번호: {scannedPartInfo.serialNumber.substring(0, 13)}...</Typography> 
                   </Box>
                 )}
                 

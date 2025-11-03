@@ -40,7 +40,18 @@ export default function MaintenanceRegist() {
           const address = accounts[0];
           setWalletAddress(address);
 
-          const response = await axios.get(`/api/vehicles/info?walletAddress=${address}`);
+          // ✅ 1. 토큰 가져오기
+          const token = localStorage.getItem('token');
+          if (!token) {
+            setMessage({ text: '로그인이 필요합니다.', type: 'error' });
+            return;
+          }
+
+          // ✅ 2. API 호출 시 인증 헤더 추가
+          const response = await axios.get(`/api/vehicles/info?walletAddress=${address}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
           if (response.data.vehicles.length > 0) {
             setUserVehicles(response.data.vehicles);
             setMessage({ text: '차량 목록을 불러왔습니다.', type: 'info' });
@@ -62,13 +73,10 @@ export default function MaintenanceRegist() {
   // QR 코드 스캐너 관리
   useEffect(() => {
     if (!showScanner) return;
-
     const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-
     const onScanSuccess = (decodedText) => {
       try {
         const partData = JSON.parse(decodedText);
-        // ✅ serialNumber도 포함되어 있는지 확인
         if (partData.partId && partData.year && partData.manufacturer && partData.serialNumber) {
           setScannedPartInfo(partData);
           setMessage({ text: '✅ QR 코드를 성공적으로 인식했습니다.', type: 'success' });
@@ -82,9 +90,7 @@ export default function MaintenanceRegist() {
         setShowScanner(false);
       }
     };
-
     scanner.render(onScanSuccess, () => {});
-
     return () => {
       if (scanner && scanner.getState()) {
         scanner.clear().catch(error => console.error("스캐너 정리 실패.", error));
@@ -102,13 +108,24 @@ export default function MaintenanceRegist() {
         return;
       }
       
-      // ✅ partInfo 객체 전체를 전송 (serialNumber 포함)
+      // ✅ 3. 토큰 가져오기
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setMessage({ text: '로그인이 필요합니다.', type: 'error' });
+        setLoading(false);
+        return;
+      }
+
+      // ✅ 4. API 호출 시 인증 헤더 및 requesterAddress 추가
       const response = await axios.post('/api/maintenance/register', {
         vehicleNumber: selectedVehicleNumber,
         odometer: Number(odometer),
         description: maintenanceDescription,
-        partInfo: scannedPartInfo, // ✅ serialNumber가 포함된 객체
+        partInfo: scannedPartInfo,
         walletAddress: walletAddress,
+        requesterAddress: walletAddress, // 사용자가 직접 등록하므로 소유주=요청자
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       alert(response.data.message);
@@ -187,9 +204,8 @@ export default function MaintenanceRegist() {
               <Box sx={{ p: 2, border: '1px dashed grey', borderRadius: 1 }}>
                 <Typography variant="subtitle2" gutterBottom>✅ 스캔된 부품 정보</Typography>
                 <Typography>부품: {scannedPartInfo.partId}</Typography>
-                <Typography>제조사: {scannedPartInfo.manufacturer}</Typography>
                 <Typography>연식: {scannedPartInfo.year}</Typography>
-                {/* ✅ 인식된 일련번호 출력 */}
+                <Typography>제조사: {scannedPartInfo.manufacturer}</Typography>
                 <Typography>일련번호: {scannedPartInfo.serialNumber.substring(0, 13)}...</Typography> 
               </Box>
             )}
