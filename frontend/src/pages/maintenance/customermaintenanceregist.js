@@ -246,7 +246,6 @@ export default function CustomerMaintenanceRegist() {
                     <Typography>부품: {scannedPartInfo.partId}</Typography>
                     <Typography>제조사: {scannedPartInfo.manufacturer}</Typography>
                     <Typography>연식: {scannedPartInfo.year}</Typography>
-                    {/* ✅ 일련번호가 표시되는지 확인 */}
                     <Typography>일련번호: {scannedPartInfo.serialNumber ? scannedPartInfo.serialNumber.substring(0, 13) + '...' : 'N/A'}</Typography> 
                   </Box>
                 )}
@@ -269,3 +268,4 @@ export default function CustomerMaintenanceRegist() {
     </Box>
   );
 }
+
