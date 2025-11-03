@@ -38,6 +38,20 @@ export default function CustomerMaintenanceRegist() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
 
+  // ✅ 401 오류(토큰 만료)를 처리하는 공통 헬퍼 함수
+  const handleApiError = (error, defaultMessage) => {
+    if (error.response?.status === 401) {
+      // 401 오류(토큰 만료 또는 무효) 시
+      setMessage({ text: '세션이 만료되었습니다. 다시 로그인해주세요.', type: 'error' });
+      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+      localStorage.clear(); // 기존 저장 정보 삭제
+      navigate('/login'); // 로그인 페이지로 강제 이동
+    } else {
+      // 기타 오류
+      setMessage({ text: error.response?.data?.message || defaultMessage, type: 'error' });
+    }
+  };
+
   // 1. 페이지 로드 시 등록된 고객 목록을 불러옵니다.
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -48,7 +62,6 @@ export default function CustomerMaintenanceRegist() {
       }
       setLoading(true);
       try {
-        // ✅ 인증 헤더 추가
         const response = await axios.get('/api/customers', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -59,13 +72,14 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '등록된 고객이 없습니다.', type: 'info' });
         }
       } catch (error) {
-        setMessage({ text: error.response?.data?.message || '고객 목록을 불러오는 데 실패했습니다.', type: 'error' });
+        // ✅ 401 오류 처리 적용
+        handleApiError(error, '고객 목록을 불러오는 데 실패했습니다.');
       } finally {
         setLoading(false);
       }
     };
     fetchCustomers();
-  }, []);
+  }, [navigate]); // navigate를 의존성 배열에 추가
 
   // QR 코드 스캐너 로직
   useEffect(() => {
@@ -74,7 +88,6 @@ export default function CustomerMaintenanceRegist() {
     const onScanSuccess = (decodedText) => {
         try {
             const partData = JSON.parse(decodedText);
-            // ✅ serialNumber가 포함되어 있는지 확인
             if (partData.partId && partData.year && partData.manufacturer && partData.serialNumber) {
               setScannedPartInfo(partData);
               setMessage({ text: '✅ QR 코드를 성공적으로 인식했습니다.', type: 'success' });
@@ -112,7 +125,6 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '로그인이 필요합니다.', type: 'error' });
           return;
         }
-        // ✅ 인증 헤더 추가
         const response = await axios.get(`/api/vehicles/by-customer?userId=${customerId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -123,7 +135,8 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '해당 고객에게 등록된 차량이 없습니다.', type: 'info' });
         }
       } catch (error) {
-        setMessage({ text: error.response?.data?.message || '고객의 차량 정보를 불러오는 데 실패했습니다.', type: 'error' });
+        // ✅ 401 오류 처리 적용
+        handleApiError(error, '고객의 차량 정보를 불러오는 데 실패했습니다.');
       } finally {
         setLoading(false);
       }
@@ -151,14 +164,13 @@ export default function CustomerMaintenanceRegist() {
         return;
       }
 
-      // ✅ API 호출에 인증 헤더 추가
       const response = await axios.post('/api/maintenance/register', {
         vehicleNumber: selectedVehicle.vehicleNumber,
         odometer: Number(odometer),
         description: maintenanceDescription,
-        partInfo: scannedPartInfo, // ✅ serialNumber 포함된 객체
-        walletAddress: selectedVehicle.walletAddress, // 소유주 지갑
-        requesterAddress: shopAddress, // 정비소 지갑
+        partInfo: scannedPartInfo,
+        walletAddress: selectedVehicle.walletAddress,
+        requesterAddress: shopAddress,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -166,8 +178,8 @@ export default function CustomerMaintenanceRegist() {
       alert('정비 이력이 성공적으로 등록되었습니다.');
       navigate('/main');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || '정비 이력 등록에 실패했습니다.';
-      setMessage({ text: errorMessage, type: 'error' });
+      // ✅ 401 오류 처리 적용
+      handleApiError(error, '정비 이력 등록에 실패했습니다.');
     } finally {
       setLoading(false);
     }
