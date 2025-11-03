@@ -21,6 +21,7 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function CustomerMaintenanceRegist() {
   const navigate = useNavigate();
+  // 정비소 지갑 주소는 localStorage에서 가져옴
   const [shopAddress, setShopAddress] = useState(localStorage.getItem('walletAddress') || '');
 
   // --- 상태 변수 ---
@@ -48,7 +49,7 @@ export default function CustomerMaintenanceRegist() {
       }
       setLoading(true);
       try {
-        // ✅ 인증 헤더 추가
+        // ✅ 고객 목록 조회 시 인증 헤더 추가
         const response = await axios.get('/api/customers', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -67,18 +68,19 @@ export default function CustomerMaintenanceRegist() {
     fetchCustomers();
   }, []);
 
-  // QR 코드 스캐너 로직 (기존과 동일)
+  // QR 코드 스캐너 로직
   useEffect(() => {
     if (!showScanner) return;
     const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: { width: 250, height: 250 } }, false);
     const onScanSuccess = (decodedText) => {
         try {
             const partData = JSON.parse(decodedText);
+            // ✅ serialNumber가 포함되어 있는지 확인
             if (partData.partId && partData.year && partData.manufacturer && partData.serialNumber) {
               setScannedPartInfo(partData);
               setMessage({ text: '✅ QR 코드를 성공적으로 인식했습니다.', type: 'success' });
             } else {
-              setMessage({ text: '유효하지 않은 부품 정보가 포함된 QR 코드입니다.', type: 'error' });
+              setMessage({ text: '유효하지 않은 부품 정보가 포함된 QR 코드입니다. (일련번호 누락)', type: 'error' });
             }
         } catch (e) {
             setMessage({ text: 'QR 코드 데이터 형식이 올바르지 않습니다.', type: 'error' });
@@ -111,7 +113,7 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '로그인이 필요합니다.', type: 'error' });
           return;
         }
-        // ✅ 인증 헤더 추가
+        // ✅ 차량 목록 조회 시 인증 헤더 추가
         const response = await axios.get(`/api/vehicles/by-customer?userId=${customerId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -150,19 +152,19 @@ export default function CustomerMaintenanceRegist() {
         return;
       }
 
-      // ✅ API 호출에 인증 헤더 추가
+      // ✅ 정비 이력 등록 시 인증 헤더 추가
       const response = await axios.post('/api/maintenance/register', {
         vehicleNumber: selectedVehicle.vehicleNumber,
         odometer: Number(odometer),
         description: maintenanceDescription,
-        partInfo: scannedPartInfo,
-        walletAddress: selectedVehicle.walletAddress, 
-        requesterAddress: shopAddress,
+        partInfo: scannedPartInfo, // ✅ serialNumber 포함된 객체
+        walletAddress: selectedVehicle.walletAddress, // 소유주 지갑
+        requesterAddress: shopAddress, // 정비소 지갑
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('정비 이력이 성공적으로 등록되었습니다.');
+      alert(response.data.message);
       navigate('/main');
     } catch (error) {
       const errorMessage = error.response?.data?.message || '정비 이력 등록에 실패했습니다.';
