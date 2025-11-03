@@ -21,7 +21,6 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function CustomerMaintenanceRegist() {
   const navigate = useNavigate();
-  // 정비소 지갑 주소는 localStorage에서 가져옴
   const [shopAddress, setShopAddress] = useState(localStorage.getItem('walletAddress') || '');
 
   // --- 상태 변수 ---
@@ -49,7 +48,7 @@ export default function CustomerMaintenanceRegist() {
       }
       setLoading(true);
       try {
-        // ✅ 고객 목록 조회 시 인증 헤더 추가
+        // ✅ 인증 헤더 추가
         const response = await axios.get('/api/customers', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -113,7 +112,7 @@ export default function CustomerMaintenanceRegist() {
           setMessage({ text: '로그인이 필요합니다.', type: 'error' });
           return;
         }
-        // ✅ 차량 목록 조회 시 인증 헤더 추가
+        // ✅ 인증 헤더 추가
         const response = await axios.get(`/api/vehicles/by-customer?userId=${customerId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -152,7 +151,7 @@ export default function CustomerMaintenanceRegist() {
         return;
       }
 
-      // ✅ 정비 이력 등록 시 인증 헤더 추가
+      // ✅ API 호출에 인증 헤더 추가
       const response = await axios.post('/api/maintenance/register', {
         vehicleNumber: selectedVehicle.vehicleNumber,
         odometer: Number(odometer),
@@ -164,7 +163,7 @@ export default function CustomerMaintenanceRegist() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert(response.data.message);
+      alert('정비 이력이 성공적으로 등록되었습니다.');
       navigate('/main');
     } catch (error) {
       const errorMessage = error.response?.data?.message || '정비 이력 등록에 실패했습니다.';
@@ -247,7 +246,8 @@ export default function CustomerMaintenanceRegist() {
                     <Typography>부품: {scannedPartInfo.partId}</Typography>
                     <Typography>제조사: {scannedPartInfo.manufacturer}</Typography>
                     <Typography>연식: {scannedPartInfo.year}</Typography>
-                    <Typography>일련번호: {scannedPartInfo.serialNumber.substring(0, 13)}...</Typography> 
+                    {/* ✅ 일련번호가 표시되는지 확인 */}
+                    <Typography>일련번호: {scannedPartInfo.serialNumber ? scannedPartInfo.serialNumber.substring(0, 13) + '...' : 'N/A'}</Typography> 
                   </Box>
                 )}
                 
