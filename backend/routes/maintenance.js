@@ -48,12 +48,12 @@ router.post('/register', authMiddleware, async (req, res) => {
     
 
     // 1. 블록체인에 정비 이력 추가 (일련번호 포함)
-    const txMaintenance = await vehicleContract.addMaintenance(vehicleNumber, description, serialNumber, overrides);
+    const txMaintenance = await vehicleContract.addMaintenance(vehicleNumber, description, serialNumber);
     await txMaintenance.wait();
     console.log(`✅ 정비 이력 등록 트랜잭션 성공: ${txMaintenance.hash}`);
 
     // 2. 블록체인에 주행 거리 업데이트
-    const txOdometer = await vehicleContract.updateOdometer(vehicleNumber, odometer, overrides);
+    const txOdometer = await vehicleContract.updateOdometer(vehicleNumber, odometer);
     await txOdometer.wait();
     console.log(`✅ 주행거리 업데이트 트랜잭션 성공: ${txOdometer.hash}`);
     
