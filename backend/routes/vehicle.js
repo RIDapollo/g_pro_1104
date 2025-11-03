@@ -46,7 +46,7 @@ router.post('/register', async (req, res) => {
 
     const overrides = {
       // 예: 5 Gwei를 우선순위 수수료로 설정 (네트워크 상황에 따라 조절)
-      maxPriorityFeePerGas: ethers.parseUnits('5', 'gwei') 
+      maxPriorityFeePerGas: ethers.parseUnits('1', 'gwei') 
     };
 
     // 1. 블록체인에 차량 정보 등록
