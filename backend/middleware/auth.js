@@ -15,7 +15,7 @@ const authMiddleware = (req, res, next) => {
     console.log("수신된 토큰:", token);
     console.log("검증에 사용할 JWT_SECRET:", super_secret_key_change_me);
     
-    const decoded = jwt.verify(token, super_secret_key_change_me);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // ✅ req.user에 walletAddress 포함
     req.user = { 
