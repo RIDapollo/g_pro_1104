@@ -29,6 +29,12 @@ router.post('/register', async (req, res) => {
   try {
     // requesterAddress는 정비소/사용자 구분을 위해 받습니다.
     const { vehicleNumber, odometer, description, partInfo, walletAddress, requesterAddress } = req.body;
+
+    const overrides = {
+      // 예: 5 Gwei를 우선순위 수수료로 설정 (네트워크 상황에 따라 조절)
+      maxPriorityFeePerGas: ethers.parseUnits('5', 'gwei') 
+    };
+    
     console.log('정비 이력 등록 데이터 수신:', req.body);
     
     // 1. 블록체인에 정비 이력 추가
