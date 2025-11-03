@@ -79,38 +79,45 @@ export default function PartRegist() {
                 return;
             }
 
+            // ✅ 1. localStorage에서 인증 토큰 가져오기
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setMessage({ text: '인증 토큰이 없습니다. 다시 로그인해주세요.', type: 'error' });
+                setLoading(false);
+                return;
+            }
+
             const partInfo = `${mainCategory} - ${subCategory}`;
             const registrationDate = new Date().toISOString();
             
-            // ✅ 1. 부품 고유 일련번호 (UUID) 생성
             const serialNumber = crypto.randomUUID();
 
-            // ✅ 2. QR 코드에 고유 일련번호 추가
             const dataToEncode = JSON.stringify({
-                partId: partInfo, // 부품 종류
+                partId: partInfo,
                 year: year,
                 manufacturer: manufacturer,
                 registrationDate: registrationDate,
-                serialNumber: serialNumber // ✅ 고유 일련번호
+                serialNumber: serialNumber
             });
 
-            // QR 코드 데이터를 state에 저장하여 화면에 렌더링
             setQrCodeData(dataToEncode);
 
-            // ✅ 3. 백엔드 API로 고유 일련번호 전송
+            // ✅ 2. 백엔드 API로 인증 헤더(토큰)를 포함하여 전송
             const response = await axios.post('/api/parts/register', {
                 partId: partInfo,
                 year: year,
                 manufacturer: manufacturer,
                 registrationDate: registrationDate,
-                serialNumber: serialNumber, // ✅ 고유 일련번호
+                serialNumber: serialNumber,
                 qrCode: dataToEncode,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}` // ✅ 인증 헤더 추가
+                }
             });
             
             setMessage({ text: response.data.message, type: 'success' });
             
-            // ✅ 4. 등록 성공 후 QR 코드 자동 다운로드
-            // state 업데이트가 렌더링될 시간을 0.5초 정도 확보
             setTimeout(() => {
                 downloadQRCode(`part-qrcode-${manufacturer}-${year}-${serialNumber.substring(0, 4)}.png`);
             }, 500);
@@ -118,7 +125,12 @@ export default function PartRegist() {
         } catch (error) {
             console.error('부품 등록 중 오류 발생:', error);
             const errorMessage = error.response?.data?.message || '부품 등록에 실패했습니다.';
-            setMessage({ text: `${errorMessage} (상태 코드: ${error.response?.status})`, type: 'error' });
+            // 401 또는 403 오류를 명확하게 표시
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                 setMessage({ text: `인증 오류: ${errorMessage}`, type: 'error' });
+            } else {
+                 setMessage({ text: `${errorMessage} (상태 코드: ${error.response?.status})`, type: 'error' });
+            }
         } finally {
             setLoading(false);
         }
