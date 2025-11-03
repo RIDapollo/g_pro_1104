@@ -46,7 +46,6 @@ router.post('/register', authMiddleware, async (req, res) => {
         return res.status(400).json({ message: "부품 일련번호(serialNumber)가 누락되었습니다." });
     }
     
-    const overrides = { maxPriorityFeePerGas: ethers.parseUnits('1', 'gwei') };
 
     // 1. 블록체인에 정비 이력 추가 (일련번호 포함)
     const txMaintenance = await vehicleContract.addMaintenance(vehicleNumber, description, serialNumber, overrides);
