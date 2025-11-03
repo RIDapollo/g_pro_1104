@@ -13,7 +13,7 @@ const authMiddleware = (req, res, next) => {
 
     console.log("---------------------------------");
     console.log("수신된 토큰:", token);
-    console.log("검증에 사용할 JWT_SECRET:", super_secret_key_change_me);
+    console.log("검증에 사용할 JWT_SECRET:", process.env.JWT_SECRET);
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
