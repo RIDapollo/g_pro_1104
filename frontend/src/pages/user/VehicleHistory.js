@@ -165,24 +165,41 @@ export default function VehicleHistory() {
             </Menu>
 
             {filteredHistory.length > 0 && (
-              <List>
-                {filteredHistory.map((record, index) => (
-                  <ListItem key={index} sx={{ p: 0, mb: 1 }}>
-                    <Paper variant="outlined" sx={{ width: '100%', p: 2, bgcolor: 'rgba(255,255,255,0.05)' }}>
-                       <ListItemText
-                          primary={<Typography color="white">{record.description}</Typography>}
-                          secondary={
-                            <Stack spacing={1} sx={{ mt: 1 }}>
-                              <Chip label={`주행거리: ${record.odometer} km`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}/>
-                              <Chip label={`정비일: ${new Date(record.timestamp).toLocaleString()}`} size="small" variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}/>
-                            </Stack>
-                          }
-                        />
-                    </Paper>
-                  </ListItem>
-                ))}
-              </List>
-            )}
+                          <List>
+                            {filteredHistory.map((record, index) => (
+                              <ListItem key={index} sx={{ p: 0, mb: 1 }}>
+                                <Paper variant="outlined" sx={{ width: '100%', p: 2, bgcolor: 'rgba(255,255,255,0.05)' }}>
+                                  <ListItemText
+                                      primary={<Typography color="white">{record.description}</Typography>}
+                                      secondary={
+                                        <Stack spacing={1} sx={{ mt: 1 }}>
+                                          <Chip label={`주행거리: ${record.odometer} km`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}/>
+                                          <Chip label={`정비일: ${new Date(record.timestamp).toLocaleString()}`} size="small" variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}/>
+                                          
+                                          {/* ✅ 트랜잭션 해시 출력 및 Etherscan 링크 추가 */}
+                                          {record.transactionHash && (
+                                            <Box>
+                                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                                                Tx Hash: 
+                                                <Link 
+                                                  href={getEtherscanUrl(record.transactionHash)} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  sx={{ color: '#66b2ff', ml: 1 }}
+                                                >
+                                                  {`${record.transactionHash.substring(0, 10)}...`}
+                                                </Link>
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                        </Stack>
+                                      }
+                                    />
+                                </Paper>
+                              </ListItem>
+                            ))}
+                          </List>
+                        )}
 
             <Button variant="outlined" onClick={() => navigate('/main')} sx={{ py: 1.5, borderColor: 'white', color: 'white' }}>
               메인 페이지로 돌아가기
