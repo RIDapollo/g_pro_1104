@@ -16,7 +16,7 @@ import PartManager from './pages/company/PartManager.js';
 import VehicleRegist from './pages/user/VehicleRegist';
 import VehicleInfo from './pages/user/VehicleInfo';
 import MaintenanceRegist from './pages/user/MaintenanceRegist';
-import VehicleHistory from './pages/user/VehicleHistory';
+import VehicleHistory from './pages/user/VehicleHistory.js';
 import U_InfoManager from "./pages/user/InfoManager";
 import UPermission from "./pages/user/u_permission"; 
 import VehicleDetailHistory from './pages/user/VehicleDetailHistory';
