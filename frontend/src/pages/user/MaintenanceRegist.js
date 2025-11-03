@@ -68,11 +68,12 @@ export default function MaintenanceRegist() {
     const onScanSuccess = (decodedText) => {
       try {
         const partData = JSON.parse(decodedText);
-        if (partData.partId && partData.year && partData.manufacturer) {
+        // ✅ serialNumber도 포함되어 있는지 확인
+        if (partData.partId && partData.year && partData.manufacturer && partData.serialNumber) {
           setScannedPartInfo(partData);
           setMessage({ text: '✅ QR 코드를 성공적으로 인식했습니다.', type: 'success' });
         } else {
-          setMessage({ text: '유효하지 않은 부품 정보가 포함된 QR 코드입니다.', type: 'error' });
+          setMessage({ text: '유효하지 않은 부품 정보가 포함된 QR 코드입니다. (일련번호 누락)', type: 'error' });
         }
       } catch (e) {
         setMessage({ text: 'QR 코드 데이터 형식이 올바르지 않습니다.', type: 'error' });
@@ -101,11 +102,12 @@ export default function MaintenanceRegist() {
         return;
       }
       
+      // ✅ partInfo 객체 전체를 전송 (serialNumber 포함)
       const response = await axios.post('/api/maintenance/register', {
         vehicleNumber: selectedVehicleNumber,
         odometer: Number(odometer),
         description: maintenanceDescription,
-        partInfo: scannedPartInfo,
+        partInfo: scannedPartInfo, // ✅ serialNumber가 포함된 객체
         walletAddress: walletAddress,
       });
 
@@ -185,8 +187,10 @@ export default function MaintenanceRegist() {
               <Box sx={{ p: 2, border: '1px dashed grey', borderRadius: 1 }}>
                 <Typography variant="subtitle2" gutterBottom>✅ 스캔된 부품 정보</Typography>
                 <Typography>부품: {scannedPartInfo.partId}</Typography>
-                <Typography>연식: {scannedPartInfo.year}</Typography>
                 <Typography>제조사: {scannedPartInfo.manufacturer}</Typography>
+                <Typography>연식: {scannedPartInfo.year}</Typography>
+                {/* ✅ 인식된 일련번호 출력 */}
+                <Typography>일련번호: {scannedPartInfo.serialNumber.substring(0, 13)}...</Typography> 
               </Box>
             )}
 
