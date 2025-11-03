@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Button, Container, FormControl, InputLabel, MenuItem, Select,
   Stack, Typography, Paper, Alert, CircularProgress, List, ListItem,
-  ListItemText, Chip, Menu
+  ListItemText, Chip, Menu, Link // ✅ Etherscan 링크를 위해 Link 컴포넌트 추가
 } from '@mui/material';
 import axios from '../../api';
 
-// ✅ 1. 부품 분류 데이터 키 값 수정 (간결하게)
+// 부품 대분류 및 소분류 데이터
 const partCategories = {
   "엔진": ["흡기계", "점화계", "연료계", "배기계", "타이밍/구동", "기타 엔진구성"],
   "변속기": ["자동/듀얼클러치/수동", "구동축"],
@@ -16,7 +16,7 @@ const partCategories = {
   "휠/타이어": ["타이어", "휠", "허브/베어링"],
 };
 
-// ✅ 2. 인터랙티브 포인트 이름도 위의 키 값과 일치시킴
+// 차량 이미지 위에 표시될 인터랙티브 포인트
 const interactivePoints = [
   { name: '엔진', top: '50%', left: '28%' },
   { name: '변속기', top: '55%', left: '45%' },
@@ -37,6 +37,7 @@ export default function VehicleHistory() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMajorCategory, setSelectedMajorCategory] = useState(null);
 
+  // 초기 차량 목록 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -57,6 +58,7 @@ export default function VehicleHistory() {
     fetchData();
   }, []);
 
+  // 차량 선택 시 전체 정비 이력 로드
   const handleVehicleSelect = async (e) => {
     const vehicleNumber = e.target.value;
     setSelectedVehicleNumber(vehicleNumber);
@@ -81,18 +83,20 @@ export default function VehicleHistory() {
     }
   };
   
-  // ✅ 3. 불필요한 split 로직 제거
+  // 차량 이미지의 포인트 클릭 핸들러
   const handleMajorCategoryClick = (event, categoryName) => {
     setAnchorEl(event.currentTarget);
     setSelectedMajorCategory(categoryName);
     setFilteredHistory([]);
   };
 
+  // 소분류 메뉴 닫기 핸들러
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedMajorCategory(null);
   };
 
+  // 소분류 선택 시 이력 필터링
   const handleSubCategorySelect = (subCategory) => {
     const filtered = allHistory.filter(record => 
       record.partInfo && record.partInfo.partId.includes(subCategory)
@@ -102,6 +106,17 @@ export default function VehicleHistory() {
         setMessage({ text: `'${subCategory}'에 대한 정비 이력이 없습니다.`, type: 'info' });
     }
     handleMenuClose();
+  };
+
+  // ✅ Etherscan 링크를 생성하는 헬퍼 함수
+  const getEtherscanUrl = (txHash) => {
+    // (네트워크가 Sepolia가 아닌 경우 URL 변경 필요)
+    return `https://sepolia.etherscan.io/tx/${txHash}`;
+  };
+
+  const formatPartInfo = (partInfo) => {
+    if (!partInfo || typeof partInfo !== 'object') return '정보 없음';
+    return `${partInfo.partId} | 제조사: ${partInfo.manufacturer}`;
   };
 
   return (
@@ -164,42 +179,43 @@ export default function VehicleHistory() {
               ))}
             </Menu>
 
+            {/* ✅ 필터링된 정비 이력 목록 (트랜잭션 해시 추가) */}
             {filteredHistory.length > 0 && (
-                          <List>
-                            {filteredHistory.map((record, index) => (
-                              <ListItem key={index} sx={{ p: 0, mb: 1 }}>
-                                <Paper variant="outlined" sx={{ width: '100%', p: 2, bgcolor: 'rgba(255,255,255,0.05)' }}>
-                                  <ListItemText
-                                      primary={<Typography color="white">{record.description}</Typography>}
-                                      secondary={
-                                        <Stack spacing={1} sx={{ mt: 1 }}>
-                                          <Chip label={`주행거리: ${record.odometer} km`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}/>
-                                          <Chip label={`정비일: ${new Date(record.timestamp).toLocaleString()}`} size="small" variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}/>
-                                          
-                                          {/* ✅ 트랜잭션 해시 출력 및 Etherscan 링크 추가 */}
-                                          {record.transactionHash && (
-                                            <Box>
-                                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                                                Tx Hash: 
-                                                <Link 
-                                                  href={getEtherscanUrl(record.transactionHash)} 
-                                                  target="_blank" 
-                                                  rel="noopener noreferrer"
-                                                  sx={{ color: '#66b2ff', ml: 1 }}
-                                                >
-                                                  {`${record.transactionHash.substring(0, 10)}...`}
-                                                </Link>
-                                              </Typography>
-                                            </Box>
-                                          )}
-                                        </Stack>
-                                      }
-                                    />
-                                </Paper>
-                              </ListItem>
-                            ))}
-                          </List>
-                        )}
+              <List>
+                {filteredHistory.map((record, index) => (
+                  <ListItem key={index} sx={{ p: 0, mb: 1 }}>
+                    <Paper variant="outlined" sx={{ width: '100%', p: 2, bgcolor: 'rgba(255,255,255,0.05)' }}>
+                       <ListItemText
+                          primary={<Typography color="white">{record.description}</Typography>}
+                          secondary={
+                            <Stack spacing={1} sx={{ mt: 1 }}>
+                              <Chip label={`주행거리: ${record.odometer} km`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}/>
+                              <Chip label={`정비일: ${new Date(record.timestamp).toLocaleString()}`} size="small" variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}/>
+                              
+                              {/* ✅ 트랜잭션 해시 출력 및 Etherscan 링크 추가 */}
+                              {record.transactionHash && (
+                                <Box>
+                                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', wordBreak: 'break-all' }}>
+                                    Tx Hash: 
+                                    <Link 
+                                      href={getEtherscanUrl(record.transactionHash)} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      sx={{ color: '#66b2ff', ml: 0.5 }}
+                                    >
+                                      {`${record.transactionHash.substring(0, 10)}...${record.transactionHash.substring(record.transactionHash.length - 4)}`}
+                                    </Link>
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Stack>
+                          }
+                        />
+                    </Paper>
+                  </ListItem>
+                ))}
+              </List>
+            )}
 
             <Button variant="outlined" onClick={() => navigate('/main')} sx={{ py: 1.5, borderColor: 'white', color: 'white' }}>
               메인 페이지로 돌아가기
