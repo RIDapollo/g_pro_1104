@@ -60,9 +60,15 @@ router.post("/login", async (req, res) => {
     const ok = await user.comparePassword(password);
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        console.error('❌ JWT_SECRET 환경 변수가 설정되지 않았습니다.');
+        return res.status(500).json({ message: '서버 설정 오류: JWT 키가 누락되었습니다.' });
+    }
+
     // --- 🔽 디버깅 로그 추가 🔽 ---
     console.log("---------------------------------");
-    console.log("토큰 발급(Signing)에 사용할 JWT_SECRET:", process.env.JWT_SECRET.trim());
+    console.log("토큰 발급(Signing)에 사용할 JWT_SECRET:", secret.trim());
     console.log("---------------------------------");
     // --- 🔼 디버깅 로그 추가 🔼 ---
 
@@ -73,8 +79,8 @@ router.post("/login", async (req, res) => {
         role: user.role,
         walletAddress: user.walletAddress 
       },
-      process.env.JWT_SECRET.trim(), // 공백 제거 적용
-      { expiresIn: "2h" }
+      secret.trim(), // 공백 제거 적용
+      { expiresIn: "365d" } // ✅ 수정: 2시간 -> 365일 (서버 시간 오류 우회)
     );
 
     return res.json({ message: "Logged in", role: user.role, token });
@@ -85,14 +91,12 @@ router.post("/login", async (req, res) => {
 });
 
 // GET /api/users/find?username=... (고객 검색)
-// (authMiddleware 추가: 로그인한 사용자만 검색 가능)
 router.get("/find", authMiddleware, async (req, res) => {
   try {
     const { username } = req.query;
     if (!username) {
       return res.status(400).json({ message: "검색할 사용자 이름이 필요합니다." });
     }
-    // 일반 사용자(role: "user")만 검색하도록 제한
     const user = await User.findOne({ username: username, role: "user" }).select("-password");
     if (!user) {
       return res.status(404).json({ message: "해당 ID의 고객을 찾을 수 없습니다." });
@@ -132,7 +136,6 @@ router.post('/change-password', authMiddleware, async (req, res) => {
 router.delete('/withdraw', authMiddleware, async (req, res) => {
     try {
         await User.findByIdAndDelete(req.user.id);
-        // TODO: 관련된 Customer, Vehicle, Maintenance 데이터도 함께 삭제하는 로직이 필요할 수 있습니다.
         res.status(200).json({ message: "회원 탈퇴가 완료되었습니다." });
     } catch (error) {
         console.error('회원 탈퇴 중 오류 발생:', error);
