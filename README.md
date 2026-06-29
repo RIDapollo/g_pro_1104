@@ -1,13 +1,30 @@
-# Sample Hardhat Project
+# g_pro_1104: 프로젝트 종합 요약 (Frontend & Smart Contract)
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+## 📌 프로젝트 개요
+`g_pro_1104`는 Web3 기술이 깊게 통합된 프론트엔드(React) 및 스마트 컨트랙트(Hardhat) 기반의 전체 탈중앙화 애플리케이션(dApp) 프로젝트입니다. 사용자의 지갑 연결, 블록체인 네트워크(예: 이더리움 Sepolia 테스트넷) 상호 작용 및 스마트 컨트랙트 연동을 지원하도록 설계되었습니다. 또한 QR 코드 스캔 및 생성 기능이 내장되어 있어 자산의 등록 및 유지보수 이력 관리, 실물 식별 시스템 등에 매우 적합합니다.
 
-Try running some of the following tasks:
+## 🛠 기술 스택
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+### 핵심 프레임워크 및 상태 관리
+* **React (v19.1.0) & React Router DOM (v7.8.1):** UI 구축 및 클라이언트 사이드 라우팅
+
+### UI / UX 디자인
+* **Material UI (@mui/material v7.3.1):** 깔끔하고 전문적인 인터페이스를 위한 React 컴포넌트
+
+### Web3 및 블록체인 연동 (Frontend & Backend)
+* **Ethers.js (v6.15.0):** 이더리움 블록체인 및 생태계와 상호 작용하기 위한 라이브러리
+* **Web3Modal (v1.9.12) & WalletConnect:** 암호화폐 지갑 연결 인터페이스
+* **Hardhat:** 스마트 컨트랙트 개발, 테스트, 로컬 노드 실행 및 배포(Ignition) 프레임워크
+
+### 하드웨어 및 유틸리티 기능
+* **QR 코드 처리 (`qrcode.react`, `html5-qrcode`, `jsqr`):** QR 코드를 생성 및 스캔하여 오프라인의 실물 자산을 온체인 기록과 연동
+
+## 🚀 주요 기능
+1. **Web3 지갑 인증:** 가상자산 지갑 연동 및 인증
+2. **스마트 컨트랙트 배포 및 통신:** Hardhat을 통해 배포된 컨트랙트와 프론트엔드 간의 데이터 조회 및 트랜잭션 발생
+3. **자산 및 ID 스캐닝:** 기기 카메라로 QR 코드를 스캔하여 온체인 데이터 매핑
+4. **가스비 최적화 및 테스트:** Hardhat 내장 도구를 활용한 스마트 컨트랙트 검증 및 트랜잭션 수수료 최적화
+
+## ⚙️ 개발 및 배포 환경
+* **Frontend:** `react-scripts`를 활용한 빌드 및 클라우드 호스팅 플랫폼 배포
+* **Smart Contract:** `npx hardhat test` 및 `npx hardhat ignition deploy`를 활용한 체계적인 컨트랙트 검증 및 테스트넷(Sepolia 등) 배포 프로세스
